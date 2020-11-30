@@ -106,6 +106,12 @@ function eventListeners(){
             
         }
     });
+    $("#test-button").click(function(evt){
+        // console.log(masterSquare[5][5].findNearbyActiveSquares(masterSquare));
+        masterQuene = [];
+        search(masterSquare[0][0]);
+        console.log(found);
+    })
 }
 
 
@@ -122,43 +128,102 @@ class Square {
         this.y = y;
         this.active = true;
         this.distanceFromTarget = 10 - (x + y);
-
+        this.cost;
+        this.parent;
     }
 
     deactivate() {
         this.active = false;
     }
 
+    setParent(x){
+        this.parent = x;
+    }
+
+
     // find the squares that next to this one and is active
     findNearbyActiveSquares(){
         let list = masterSquare;
+        let plist = masterPoint;
         let myReturnList = [];
+        console.log(this.cost + 1)
         //check square to the left
         if (this.x > 0){
             if (list[this.y][this.x - 1].active){
-                myReturnList.push(list[this.y][this.x - 1]);
+                if (!((""+ this.x + (this.y + 1)) in plist[this.y][this.x].listOfConnectedPoints)){
+                    list[this.y][this.x - 1].setParent(this);
+                    myReturnList.push([list[this.y][this.x - 1], this.cost + 1]);
+                }
             }
         }
         // check square above
         if (this.y > 0){
             if (list[this.y - 1][this.x].active){
-                myReturnList.push(list[this.y - 1][this.x]);
+                if (!((""+ this.x + (this.y)) in plist[this.y][this.x + 1].listOfConnectedPoints)){
+                    list[this.y - 1][this.x].setParent(this);
+                    myReturnList.push([list[this.y - 1][this.x], this.cost + 1]);
+                }
             }
         }
         //check square to the right
         if (this.x < 5){
             if (list[this.y][this.x + 1].active){
-                myReturnList.push(list[this.y][this.x + 1]);
+                if (!((""+ (this.x + 1)+ (this.y + 1)) in plist[this.y][this.x + 1].listOfConnectedPoints)){
+                    list[this.y][this.x + 1].setParent(this);
+                    myReturnList.push([list[this.y][this.x + 1], this.cost + 1]);
+                }
+                
             }
         }
         // check square below
         if (this.y < 5){
             if (list[this.y + 1][this.x].active){
-                myReturnList.push(list[this.y + 1][this.x]);
+                if (!((""+ this.x+ (this.y + 1)) in plist[this.y + 1][this.x + 1].listOfConnectedPoints)){
+                    list[this.y + 1][this.x].setParent(this);
+                    myReturnList.push([list[this.y + 1][this.x], this.cost + 1]);
+                }
             }
         }
         return myReturnList;
     }
+    setCost(cost){
+        this.cost = cost
+    }
+
+
+}
+// square, cost to get there
+var masterQuene;
+var found;
+// run this on each item in the quene
+function search(square, cost= 0){
+    masterQuene.shift();
+    console.log(square.x);
+    console.log(square.y);
+    if (square.x == 5 && square.y == 5){
+        // stop everythign
+        found = true;
+        return true;
+    }
+    if (square.active){
+        square.deactivate();
+        square.setCost(cost);// set cost to get to A, 0
+        masterQuene.push.apply(masterQuene, square.findNearbyActiveSquares()); // addd to the master quene
+        // console.log(masterQuene);
+        masterQuene.sort(compareFunction);
+    }
+    if (masterQuene.length > 0){
+        search(masterQuene[0][0], masterQuene[0][1]);
+    }
+    else{
+        found = false;
+        return false;
+    }
+    
+}
+
+function compareFunction(item){
+    return (item[0].distanceFromTarget + item[1])
 }
 
 class Point{
@@ -246,9 +311,7 @@ function my7x7(){
     // ctx.fillRect(0, 0, 150, 75);
 }
 
-function search(){
 
-}
 function initial(){
     // create the 7 by 7 grid
     my7x7();
@@ -256,6 +319,6 @@ function initial(){
     eventListeners();
     // testing the next to: code
     // console.log(masterSquare[0][0])
-    console.log(masterSquare[0][5].findNearbyActiveSquares(masterSquare));
+    // console.log(masterSquare[0][5].findNearbyActiveSquares(masterSquare));
 
 }
