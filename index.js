@@ -12,7 +12,7 @@ function eventListeners(){
     var startLine = false;
     var startingPoint;
     var sX, sY;
-    var keepLoop = true;
+    // var keepLoop = true;
     $("#a-StarCanvas").click(function(evt){
         console.log("touched")
         var canvas = document.getElementById("a-StarCanvas");
@@ -56,7 +56,7 @@ function eventListeners(){
                     ctx.lineWidth = 5;
                     ctx.strokeStyle = "pink";
                     ctx.stroke();
-                    keepLoop = false;
+                    // keepLoop = false;
                 }
                 else{
                     console.log(Math.abs(sX - x) + Math.abs(sY - i))
@@ -72,7 +72,8 @@ function eventListeners(){
             else{
                 console.log("set starting point to " + x, i)
                 startLine = true;
-                keepLoop = true;
+                // keepLoop = true;
+
                 startingPoint = masterPoint[i][x];
                 sY= i;
                 sX =x;
@@ -85,12 +86,12 @@ function eventListeners(){
                 //     mousex = hold[0] - 10;
                 //     mousey = hold[1] - 10;
 
-                //     ctx.beginPath();
-                //     ctx.moveTo(startingPoint.x, startingPoint.y);
-                //     ctx.lineTo(mousex, mousey);
-                //     ctx.lineWidth = 5;
-                //     ctx.strokeStyle = "pink";
-                //     ctx.stroke();
+                // ctx.beginPath();
+                // ctx.moveTo(startingPoint.x, startingPoint.y);
+                // ctx.lineTo(mousex, mousey);
+                // ctx.lineWidth = 5;
+                // ctx.strokeStyle = "pink";
+                // ctx.stroke();
 
                 //     setTimeout(function () {
                 //         // return the canvas to the state befor 
@@ -111,6 +112,9 @@ function eventListeners(){
         masterQuene = [];
         search(masterSquare[0][0]);
         console.log(found);
+        if (found){
+            retrace();
+        }
     })
 }
 
@@ -123,13 +127,15 @@ function getMousePos(canvas, evt) {
 }
 class Square {
     // x, y E [0, 5]
-    constructor(x, y){
+    constructor(x, y, distance){
         this.x = x;
         this.y = y;
         this.active = true;
         this.distanceFromTarget = 10 - (x + y);
         this.cost;
         this.parent;
+        this.xCoord = (distance) * (x - .5);
+        this.yCoord = (distance) * (x - .5);
     }
 
     deactivate() {
@@ -200,17 +206,18 @@ function search(square, cost= 0){
     masterQuene.shift();
     console.log(square.x);
     console.log(square.y);
-    if (square.x == 5 && square.y == 5){
-        // stop everythign
-        found = true;
-        return true;
-    }
+    
     if (square.active){
         square.deactivate();
         square.setCost(cost);// set cost to get to A, 0
         masterQuene.push.apply(masterQuene, square.findNearbyActiveSquares()); // addd to the master quene
         // console.log(masterQuene);
         masterQuene.sort(compareFunction);
+    }
+    if (square.x == 5 && square.y == 5){
+        // stop everythign
+        found = true;
+        return true;
     }
     if (masterQuene.length > 0){
         search(masterQuene[0][0], masterQuene[0][1]);
@@ -222,6 +229,24 @@ function search(square, cost= 0){
     
 }
 
+function retrace(){
+    for (var i = 0; i < masterSquare.length; i++){
+        // draw line from current coord to their parent 
+        // masterSquare[i].xCoord, masterSquare[i].yCoord
+        // masterSquare[i].parent.xCoord, masterSquare[i].parent.yCoord
+        for (var x = 0; x < masterSquare[i].length; x++){
+            if ((!masterSquare[i][x].active) && !(masterSquare[i][x].x + masterSquare[i][x].y == 0)){
+                ctx.beginPath();
+                ctx.moveTo(masterSquare[i][x].xCoord, masterSquare[i][x].yCoord);
+                ctx.lineTo(masterSquare[i][x].parent.xCoord, masterSquare[i][x].parent.yCoord);
+                ctx.lineWidth = 10;
+                ctx.strokeStyle = "green";
+                ctx.stroke();
+            }
+        }
+        
+    }
+}
 function compareFunction(item){
     return (item[0].distanceFromTarget + item[1])
 }
@@ -265,14 +290,6 @@ class Point{
 
 var masterPoint = [];
 var masterSquare = [];
-for (var i = 0; i< 6; i ++){
-    // create new row
-    masterSquare.push([]);
-    for (var x = 0; x< 6; x ++){
-        // create new square in row
-        masterSquare[i].push(new Square(x, i));
-    }
-}
 
 // create the 7 by 7 grid
 function my7x7(){
@@ -301,6 +318,15 @@ function my7x7(){
 
         
     }
+    for (var i = 0; i< 6; i ++){
+        // create new row
+        masterSquare.push([]);
+        for (var x = 0; x< 6; x ++){
+            // create new square in row
+            masterSquare[i].push(new Square(x, i, canvas.clientWidth));
+        }
+    }
+    
     ctx.beginPath();
     ctx.font = "30px Arial";
     ctx.fillText("B",holdx - canvas.clientWidth / 6 -50, holdy - 100)
