@@ -112,6 +112,7 @@ function eventListeners(){
         masterQuene = [];
         search(masterSquare[0][0]);
         console.log(found);
+        console.log(masterSquare)
         if (found){
             retrace();
         }
@@ -134,8 +135,9 @@ class Square {
         this.distanceFromTarget = 10 - (x + y);
         this.cost;
         this.parent;
-        this.xCoord = (distance) * (x - .5);
-        this.yCoord = (distance) * (x - .5);
+        // this.distance = distance;
+        this.xCoord = (distance) * (x + .5);
+        this.yCoord = (distance) * (y + .5);
     }
 
     deactivate() {
@@ -152,7 +154,7 @@ class Square {
         let list = masterSquare;
         let plist = masterPoint;
         let myReturnList = [];
-        console.log(this.cost + 1)
+        // console.log(this.cost + 1)
         //check square to the left
         if (this.x > 0){
             if (list[this.y][this.x - 1].active){
@@ -203,7 +205,7 @@ var masterQuene;
 var found;
 // run this on each item in the quene
 function search(square, cost= 0){
-    masterQuene.shift();
+    masterQuene.shift();// pop off item from the quene
     console.log(square.x);
     console.log(square.y);
     
@@ -211,8 +213,14 @@ function search(square, cost= 0){
         square.deactivate();
         square.setCost(cost);// set cost to get to A, 0
         masterQuene.push.apply(masterQuene, square.findNearbyActiveSquares()); // addd to the master quene
-        // console.log(masterQuene);
+        
+        // test if sorting is working
+        hold = masterQuene;
+        console.log(masterQuene);
         masterQuene.sort(compareFunction);
+        console.log(masterQuene);   
+        console.log(hold == masterQuene)
+
     }
     if (square.x == 5 && square.y == 5){
         // stop everythign
@@ -247,8 +255,8 @@ function retrace(){
         
     }
 }
-function compareFunction(item){
-    return (item[0].distanceFromTarget + item[1])
+function compareFunction(a, b){
+    return (a[0].distanceFromTarget * 1.1+ a[1]) - (b[0].distanceFromTarget * 1.1 + b[1]) 
 }
 
 class Point{
@@ -323,7 +331,7 @@ function my7x7(){
         masterSquare.push([]);
         for (var x = 0; x< 6; x ++){
             // create new square in row
-            masterSquare[i].push(new Square(x, i, canvas.clientWidth));
+            masterSquare[i].push(new Square(x, i, canvas.clientWidth / 6));
         }
     }
     
