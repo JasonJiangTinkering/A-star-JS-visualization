@@ -111,8 +111,8 @@ function eventListeners(){
         // console.log(masterSquare[5][5].findNearbyActiveSquares(masterSquare));
         masterQuene = [];
         search(masterSquare[0][0]);
-        console.log(found);
-        console.log(masterSquare)
+        console.log("found?: " + found);
+    
         if (found){
             retrace();
         }
@@ -148,19 +148,22 @@ class Square {
         this.parent = x;
     }
 
-
+    
     // find the squares that next to this one and is active
     findNearbyActiveSquares(){
+        const test = 1.001;
         let list = masterSquare;
         let plist = masterPoint;
         let myReturnList = [];
-        // console.log(this.cost + 1)
+        let squareCost = this.cost + 1;
+        console.log(Number(squareCost))
         //check square to the left
         if (this.x > 0){
             if (list[this.y][this.x - 1].active){
                 if (!((""+ this.x + (this.y + 1)) in plist[this.y][this.x].listOfConnectedPoints)){
                     list[this.y][this.x - 1].setParent(this);
-                    myReturnList.push([list[this.y][this.x - 1], this.cost + 1]);
+                    myReturnList.push([list[this.y][this.x - 1], squareCost + list[this.y][this.x - 1].distanceFromTarget * test]);
+                    list[this.y][this.x - 1].setCost(squareCost);
                 }
             }
         }
@@ -169,7 +172,8 @@ class Square {
             if (list[this.y - 1][this.x].active){
                 if (!((""+ this.x + (this.y)) in plist[this.y][this.x + 1].listOfConnectedPoints)){
                     list[this.y - 1][this.x].setParent(this);
-                    myReturnList.push([list[this.y - 1][this.x], this.cost + 1]);
+                    myReturnList.push([list[this.y - 1][this.x], squareCost + list[this.y - 1][this.x].distanceFromTarget * test]);
+                    list[this.y - 1][this.x].setCost(squareCost);
                 }
             }
         }
@@ -178,7 +182,9 @@ class Square {
             if (list[this.y][this.x + 1].active){
                 if (!((""+ (this.x + 1)+ (this.y + 1)) in plist[this.y][this.x + 1].listOfConnectedPoints)){
                     list[this.y][this.x + 1].setParent(this);
-                    myReturnList.push([list[this.y][this.x + 1], this.cost + 1]);
+                    myReturnList.push([list[this.y][this.x + 1], squareCost + list[this.y][this.x + 1].distanceFromTarget * test]);
+                    list[this.y][this.x + 1].setCost(squareCost);
+
                 }
                 
             }
@@ -188,10 +194,12 @@ class Square {
             if (list[this.y + 1][this.x].active){
                 if (!((""+ this.x+ (this.y + 1)) in plist[this.y + 1][this.x + 1].listOfConnectedPoints)){
                     list[this.y + 1][this.x].setParent(this);
-                    myReturnList.push([list[this.y + 1][this.x], this.cost + 1]);
+                    myReturnList.push([list[this.y + 1][this.x], squareCost + list[this.y + 1][this.x].distanceFromTarget * test]);
+                    list[this.y + 1][this.x].setCost(squareCost);
                 }
             }
         }
+        // console.log("return list: " + myReturnList)
         return myReturnList;
     }
     setCost(cost){
@@ -204,22 +212,45 @@ class Square {
 var masterQuene;
 var found;
 // run this on each item in the quene
-function search(square, cost= 0){
-    masterQuene.shift();// pop off item from the quene
-    console.log(square.x);
-    console.log(square.y);
+var count = 0;
+function search(square){ 
+    count ++;
+    console.log("count:" + count);
+    masterQuene.shift();// pop off 1 items from the quene
+    var stringMasterQ = "";
+    for (var i = 0; i < masterQuene.length; i++){
+        stringMasterQ += "[" +masterQuene[i]+"]" + ",";
+    }
+    console.log("quene length: "+ stringMasterQ)
+    console.log(square)
+    console.log(square.x, square.y);
     
     if (square.active){
         square.deactivate();
-        square.setCost(cost);// set cost to get to A, 0
-        masterQuene.push.apply(masterQuene, square.findNearbyActiveSquares()); // addd to the master quene
+
+        // draw line
+        if (!square.x + square.y == 0){
+            ctx.beginPath();
+            ctx.moveTo(square.xCoord, square.yCoord);
+            ctx.lineTo(square.parent.xCoord, square.parent.yCoord);
+            ctx.lineWidth = 8;
+            ctx.strokeStyle = "orange";
+            ctx.stroke();
+            }
+        else{
+            square.setCost(0);
+        }
+
         
+        masterQuene.push.apply(masterQuene, square.findNearbyActiveSquares()); // addd to the master quene
+
+
         // test if sorting is working
         hold = masterQuene;
-        console.log(masterQuene);
+        // console.log(String(masterQuene));
         masterQuene.sort(compareFunction);
-        console.log(masterQuene);   
-        console.log(hold == masterQuene)
+        // console.log(String(masterQuene));   
+        // console.log(String(hold == masterQuene))
 
     }
     if (square.x == 5 && square.y == 5){
@@ -247,16 +278,27 @@ function retrace(){
                 ctx.beginPath();
                 ctx.moveTo(masterSquare[i][x].xCoord, masterSquare[i][x].yCoord);
                 ctx.lineTo(masterSquare[i][x].parent.xCoord, masterSquare[i][x].parent.yCoord);
-                ctx.lineWidth = 10;
-                ctx.strokeStyle = "green";
+                ctx.lineWidth = 8;
+                ctx.strokeStyle = "orange";
                 ctx.stroke();
             }
         }
+
         
+    }
+    var target = masterSquare[5][5];
+    while (target.x + target.y != 0){
+        ctx.beginPath();
+        ctx.moveTo(target.xCoord, target.yCoord);
+        ctx.lineTo(target.parent.xCoord, target.parent.yCoord);
+        ctx.lineWidth = 10;
+        ctx.strokeStyle = "green";
+        ctx.stroke();
+        target= target.parent
     }
 }
 function compareFunction(a, b){
-    return (a[0].distanceFromTarget * 1.1+ a[1]) - (b[0].distanceFromTarget * 1.1 + b[1]) 
+    return (a[1]) - (b[1]) ;
 }
 
 class Point{
@@ -340,7 +382,7 @@ function my7x7(){
     ctx.fillText("B",holdx - canvas.clientWidth / 6 -50, holdy - 100)
     
     
-    console.log(masterSquare)
+    // console.log(masterSquare)
     // console.log(masterPoint)
     // ctx.fillRect(0, 0, 150, 75);
 }
