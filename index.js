@@ -156,46 +156,53 @@ class Square {
         let plist = masterPoint;
         let myReturnList = [];
         let squareCost = this.cost + 1;
-        console.log(Number(squareCost))
+        console.log("cost: "+ Number(squareCost))
         //check square to the left
         if (this.x > 0){
             if (list[this.y][this.x - 1].active){
-                if (!((""+ this.x + (this.y + 1)) in plist[this.y][this.x].listOfConnectedPoints)){
-                    list[this.y][this.x - 1].setParent(this);
-                    myReturnList.push([list[this.y][this.x - 1], squareCost + list[this.y][this.x - 1].distanceFromTarget * test]);
-                    list[this.y][this.x - 1].setCost(squareCost);
+                if (!(list[this.y][this.x - 1].cost <= squareCost)){
+                    if (!((""+ this.x + (this.y + 1)) in plist[this.y][this.x].listOfConnectedPoints)){
+                        list[this.y][this.x - 1].setParent(this);
+                        myReturnList.push([list[this.y][this.x - 1], squareCost + list[this.y][this.x - 1].distanceFromTarget * test]);
+                        list[this.y][this.x - 1].setCost(squareCost);
+                    }
                 }
+
             }
         }
         // check square above
         if (this.y > 0){
             if (list[this.y - 1][this.x].active){
-                if (!((""+ this.x + (this.y)) in plist[this.y][this.x + 1].listOfConnectedPoints)){
-                    list[this.y - 1][this.x].setParent(this);
-                    myReturnList.push([list[this.y - 1][this.x], squareCost + list[this.y - 1][this.x].distanceFromTarget * test]);
-                    list[this.y - 1][this.x].setCost(squareCost);
+                if (!(list[this.y - 1][this.x].cost <= squareCost)){ // if this new cost to get to the square is less then or a new cost to get to the square
+                    if (!((""+ this.x + (this.y)) in plist[this.y][this.x + 1].listOfConnectedPoints)){
+                        list[this.y - 1][this.x].setParent(this);
+                        myReturnList.push([list[this.y - 1][this.x], squareCost + list[this.y - 1][this.x].distanceFromTarget * test]);
+                        list[this.y - 1][this.x].setCost(squareCost);
+                    }
                 }
             }
         }
         //check square to the right
         if (this.x < 5){
             if (list[this.y][this.x + 1].active){
-                if (!((""+ (this.x + 1)+ (this.y + 1)) in plist[this.y][this.x + 1].listOfConnectedPoints)){
-                    list[this.y][this.x + 1].setParent(this);
-                    myReturnList.push([list[this.y][this.x + 1], squareCost + list[this.y][this.x + 1].distanceFromTarget * test]);
-                    list[this.y][this.x + 1].setCost(squareCost);
-
+                if (!(list[this.y][this.x + 1].cost <= squareCost)){
+                    if (!((""+ (this.x + 1)+ (this.y + 1)) in plist[this.y][this.x + 1].listOfConnectedPoints)){
+                        list[this.y][this.x + 1].setParent(this);
+                        myReturnList.push([list[this.y][this.x + 1], squareCost + list[this.y][this.x + 1].distanceFromTarget * test]);
+                        list[this.y][this.x + 1].setCost(squareCost);
+                    }
                 }
-                
             }
         }
         // check square below
         if (this.y < 5){
             if (list[this.y + 1][this.x].active){
-                if (!((""+ this.x+ (this.y + 1)) in plist[this.y + 1][this.x + 1].listOfConnectedPoints)){
-                    list[this.y + 1][this.x].setParent(this);
-                    myReturnList.push([list[this.y + 1][this.x], squareCost + list[this.y + 1][this.x].distanceFromTarget * test]);
-                    list[this.y + 1][this.x].setCost(squareCost);
+                if (!(list[this.y + 1][this.x].cost <= squareCost)){
+                    if (!((""+ this.x+ (this.y + 1)) in plist[this.y + 1][this.x + 1].listOfConnectedPoints)){
+                        list[this.y + 1][this.x].setParent(this);
+                        list[this.y + 1][this.x].setCost(squareCost);
+                        myReturnList.push([list[this.y + 1][this.x], squareCost + list[this.y + 1][this.x].distanceFromTarget * test]);
+                    }
                 }
             }
         }
@@ -213,15 +220,14 @@ var masterQuene;
 var found;
 // run this on each item in the quene
 var count = 0;
-function search(square){ 
-    count ++;
+function search(square, rank=0){ 
+    console.log("");    
     console.log("count:" + count);
+
+    console.log("rank: " + rank)
+    count ++;
     masterQuene.shift();// pop off 1 items from the quene
-    var stringMasterQ = "";
-    for (var i = 0; i < masterQuene.length; i++){
-        stringMasterQ += "[" +masterQuene[i]+"]" + ",";
-    }
-    console.log("quene length: "+ stringMasterQ)
+
     console.log(square)
     console.log(square.x, square.y);
     
@@ -229,7 +235,7 @@ function search(square){
         square.deactivate();
 
         // draw line
-        if (!square.x + square.y == 0){
+        if ((square.x + square.y) != 0){
             ctx.beginPath();
             ctx.moveTo(square.xCoord, square.yCoord);
             ctx.lineTo(square.parent.xCoord, square.parent.yCoord);
@@ -243,14 +249,19 @@ function search(square){
 
         
         masterQuene.push.apply(masterQuene, square.findNearbyActiveSquares()); // addd to the master quene
-
+        
 
         // test if sorting is working
-        hold = masterQuene;
+        // hold = masterQuene;
         // console.log(String(masterQuene));
         masterQuene.sort(compareFunction);
         // console.log(String(masterQuene));   
         // console.log(String(hold == masterQuene))
+        var stringMasterQ = "";
+        for (var i = 0; i < masterQuene.length; i++){
+            stringMasterQ += "[" +masterQuene[i][0].x +"," + masterQuene[i][0].y+", Ranking: "+masterQuene[i][1]+", DistanceFromTarget: "+masterQuene[i][0].distanceFromTarget+", Cost: "+masterQuene[i][0].cost+"]" + ",";
+        }
+        console.log("quene length: "+ stringMasterQ)
 
     }
     if (square.x == 5 && square.y == 5){
