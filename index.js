@@ -1,51 +1,45 @@
 $(document).ready(function(){
     console.log("start");
     initial();
+    eventListeners();
 })
 
-var canvas;
+var canvas = document.getElementById("a-StarCanvas");
 var ctx;
-
-
+var imageData;
+var StartData;
+var holdPoints;
 function eventListeners(){
     // if click on the dots
     var startLine = false;
     var startingPoint;
     var sX, sY;
     // var keepLoop = true;
+    
     $("#a-StarCanvas").click(function(evt){
-        console.log("touched")
-        var canvas = document.getElementById("a-StarCanvas");
+        // console.log("touched")
         var mousex, mousey;
-        
         var hold = getMousePos(canvas, evt);
-
         mousex = hold[0] - 10;
         mousey = hold[1] - 10;
-
         var i, x;
         var found = false;
         for (i = 0; i < masterPoint.length; i++){
             for(x = 0; x < masterPoint[i].length; x++){
-
-                // console.log(i, x)
-                
                 if (masterPoint[i][x].clickedOn(mousex, mousey,30)){
                     found = true;
                     break;
                 }
-                
             }
             if (found){
                 break;
             }
-            
         }
         if (found){
-            console.log("found")
+            console.log("found point")
             if (startLine){
                 if (1 == Math.abs(sX - x) + Math.abs(sY - i)){
-                    
+                    console.log("set ending point to " + x, i)
                     startingPoint.activate();
                     startingPoint.addConnection("" + x + i, masterPoint[i][x]);
                     masterPoint[i][x].activate()
@@ -59,10 +53,10 @@ function eventListeners(){
                     // keepLoop = false;
                 }
                 else{
-                    console.log(Math.abs(sX - x) + Math.abs(sY - i))
+                    // console.log(Math.abs(sX - x) + Math.abs(sY - i))
                     // console.log((sX - x) + Math.abs(sY - i))
-                    console.log(Math.abs(sX - x))
-                    console.log(sY )
+                    // console.log(Math.abs(sX - x))
+                    // console.log(sY )
 
 
                     console.log("point selected is not ajacent to the starting point");
@@ -79,7 +73,7 @@ function eventListeners(){
                 sX =x;
 
                 // // save the state of  the canvas here // need async function // extra - comeback
-                // var imageData = ctx.getImageData(0,0,canvas.width,canvas.height);
+                
                 // while (keepLoop == true){
                 // // show a line connecting the curser to the connected point
                 //     hold = getMousePos(canvas, evt);
@@ -98,27 +92,39 @@ function eventListeners(){
                 //         ctx.putImageData(imageData, 0, 0);
                 //     }, 1000);
                 // }
-                
-
-
-                
-                
             }
             
         }
     });
     $("#test-button").click(function(evt){
-        // console.log(masterSquare[5][5].findNearbyActiveSquares(masterSquare));
+        imageData = ctx.getImageData(0,0,canvas.width,canvas.height);
+        // save points
+        holdPoints = copyMasterPoint(); 
+        // save the walls in case we want to use it later
         masterQuene = [];
+        // console.log(masterPoint)
         search(masterSquare[0][0]);
         console.log("found?: " + found);
-    
+        
         if (found){
             retrace();
         }
     })
+    $("#reset-button").click(function(evt){
+        //clear canvas
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        ctx.putImageData(StartData, 0, 0);
+        // reset points and squares list
+        myPoints();
+        mySquare();
+    })
+    $("#reset-walls").click(function(){
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        ctx.putImageData(imageData, 0, 0);
+        masterPoint = holdPoints; 
+        mySquare();
+    })
 }
-
 
 function getMousePos(canvas, evt) {
     var rect = canvas.getBoundingClientRect();
@@ -156,7 +162,7 @@ class Square {
         let plist = masterPoint;
         let myReturnList = [];
         let squareCost = this.cost + 1;
-        console.log("cost: "+ Number(squareCost))
+        // console.log("cost: "+ Number(squareCost))
         //check square to the left
         if (this.x > 0){
             if (list[this.y][this.x - 1].active){
@@ -221,19 +227,16 @@ var found;
 // run this on each item in the quene
 var count = 0;
 function search(square, rank=0){ 
-    console.log("");    
-    console.log("count:" + count);
-
-    console.log("rank: " + rank)
+    // console.log("");    
+    // console.log("count:" + count);
+    // console.log("rank: " + rank)
+    // console.log(square)
+    // console.log(square.x, square.y);
     count ++;
     masterQuene.shift();// pop off 1 items from the quene
 
-    console.log(square)
-    console.log(square.x, square.y);
-    
     if (square.active){
         square.deactivate();
-
         // draw line
         if ((square.x + square.y) != 0){
             ctx.beginPath();
@@ -246,23 +249,13 @@ function search(square, rank=0){
         else{
             square.setCost(0);
         }
-
-        
         masterQuene.push.apply(masterQuene, square.findNearbyActiveSquares()); // addd to the master quene
-        
-
-        // test if sorting is working
-        // hold = masterQuene;
-        // console.log(String(masterQuene));
         masterQuene.sort(compareFunction);
-        // console.log(String(masterQuene));   
-        // console.log(String(hold == masterQuene))
         var stringMasterQ = "";
         for (var i = 0; i < masterQuene.length; i++){
             stringMasterQ += "[" +masterQuene[i][0].x +"," + masterQuene[i][0].y+", Ranking: "+masterQuene[i][1]+", DistanceFromTarget: "+masterQuene[i][0].distanceFromTarget+", Cost: "+masterQuene[i][0].cost+"]" + ",";
         }
-        console.log("quene length: "+ stringMasterQ)
-
+        // console.log("quene length: "+ stringMasterQ)
     }
     if (square.x == 5 && square.y == 5){
         // stop everythign
@@ -282,8 +275,6 @@ function search(square, rank=0){
 function retrace(){
     for (var i = 0; i < masterSquare.length; i++){
         // draw line from current coord to their parent 
-        // masterSquare[i].xCoord, masterSquare[i].yCoord
-        // masterSquare[i].parent.xCoord, masterSquare[i].parent.yCoord
         for (var x = 0; x < masterSquare[i].length; x++){
             if ((!masterSquare[i][x].active) && !(masterSquare[i][x].x + masterSquare[i][x].y == 0)){
                 ctx.beginPath();
@@ -312,6 +303,18 @@ function compareFunction(a, b){
     return (a[1]) - (b[1]) ;
 }
 
+function copyMasterPoint(){
+    var newArray = [];
+    for (var i = 0; i< masterPoint.length; i ++){
+        // create new row
+        newArray.push([])
+        for (var x = 0; x< 7; x ++){
+            newArray[i].push(masterPoint[i][x].clone());
+        }
+    }
+    return newArray;
+}
+
 class Point{
    // x, y E [0, 6]
     constructor(x, y){
@@ -332,7 +335,7 @@ class Point{
         if (!(xy in this.listOfConnectedPoints)){
             
             this.listOfConnectedPoints[xy] = point; 
-            console.log(this.listOfConnectedPoints)
+            // console.log(this.listOfConnectedPoints)
         }
         else{
             console.log("already in the dict")
@@ -346,11 +349,52 @@ class Point{
             return false;
         }
     }
+    clone(){
+        var x = new Point(this.x, this.y);
+        x.active = this.active;
+        x.connectedTo = this.connectedTo;
+        x.listOfConnectedPoints = Object.assign({}, this.listOfConnectedPoints);
+        return x;
+    }
+
 }
 
 
-var masterPoint = [];
-var masterSquare = [];
+var masterPoint;
+var masterSquare;
+function mySquare(){
+    // create a 6 by 6 grid of squares
+    masterSquare = [];
+    for (var i = 0; i< 6; i ++){
+        // create new row
+        masterSquare.push([]);
+        for (var x = 0; x< 6; x ++){
+            // create new square in row
+            masterSquare[i].push(new Square(x, i, canvas.clientWidth / 6));
+        }
+    }
+
+}
+//  9 x 9 points grid
+function myPoints(){
+    masterPoint = [];
+    holdy = 0;
+
+    for (var i = 0; i< 7; i ++){
+        var holdx = 0;
+        // create new row
+        masterPoint.push([])
+        for (var x = 0; x< 7; x ++){
+            // create new point in row
+            masterPoint[i].push(new Point(holdx, holdy));
+
+            holdx += canvas.clientWidth / 6;  
+        }
+        holdy += canvas.clientHeight / 6;
+
+        
+    }
+}
 
 // create the 7 by 7 grid
 function my7x7(){
@@ -363,49 +407,40 @@ function my7x7(){
     ctx.fillText("A",25,50)
     for (var i = 0; i< 7; i ++){
         var holdx = 0;
-        // create new row
-        masterPoint.push([])
         for (var x = 0; x< 7; x ++){
             // draw the point
             ctx.beginPath();
             ctx.arc(holdx, holdy, 10, 0, 2 * Math.PI);
             ctx.fill();
-            // create new point in row
-            masterPoint[i].push(new Point(holdx, holdy));
-
             holdx += canvas.clientWidth / 6;  
         }
         holdy += canvas.clientHeight / 6;
 
         
     }
-    for (var i = 0; i< 6; i ++){
-        // create new row
-        masterSquare.push([]);
-        for (var x = 0; x< 6; x ++){
-            // create new square in row
-            masterSquare[i].push(new Square(x, i, canvas.clientWidth / 6));
-        }
-    }
     
     ctx.beginPath();
     ctx.font = "30px Arial";
     ctx.fillText("B",holdx - canvas.clientWidth / 6 -50, holdy - 100)
-    
-    
+    StartData = ctx.getImageData(0,0,canvas.width,canvas.height);
+    imageData = ctx.getImageData(0,0,canvas.width,canvas.height);
     // console.log(masterSquare)
     // console.log(masterPoint)
-    // ctx.fillRect(0, 0, 150, 75);
+    // ctx.fillRect(0, 0, 150, 75); 
 }
 
 
 function initial(){
     // create the 7 by 7 grid
     my7x7();
-    // create barriers
-    eventListeners();
-    // testing the next to: code
-    // console.log(masterSquare[0][0])
-    // console.log(masterSquare[0][5].findNearbyActiveSquares(masterSquare));
+    // create list of squares
+    mySquare();
+    // create list of points for barriers
+    myPoints();
+
+    // make the hold list have the initial points array
+    holdPoints = copyMasterPoint();
+    
+
 
 }
